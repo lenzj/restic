@@ -458,13 +458,13 @@ func (d *HostsDir) Lookup(ctx context.Context, name string) (fs.Node, error) {
 
 		_, ok := d.hosts[name]
 		if ok {
-			return NewSnapshotsDir(d.root, fs.GenerateDynamicInode(d.root.inode, name), "", name), nil
+			return NewSnapshotsDir(d.root, fs.GenerateDynamicInode(d.inode, name), "", name), nil
 		}
 
 		return nil, fuse.ENOENT
 	}
 
-	return NewSnapshotsDir(d.root, fs.GenerateDynamicInode(d.root.inode, name), "", name), nil
+	return NewSnapshotsDir(d.root, fs.GenerateDynamicInode(d.inode, name), "", name), nil
 }
 
 // Lookup returns a specific entry from the TagsDir.
@@ -481,11 +481,11 @@ func (d *TagsDir) Lookup(ctx context.Context, name string) (fs.Node, error) {
 
 		_, ok := d.tags[name]
 		if ok {
-			return NewSnapshotsDir(d.root, fs.GenerateDynamicInode(d.root.inode, name), name, ""), nil
+			return NewSnapshotsDir(d.root, fs.GenerateDynamicInode(d.inode, name), name, ""), nil
 		}
 
 		return nil, fuse.ENOENT
 	}
 
-	return NewSnapshotsDir(d.root, fs.GenerateDynamicInode(d.root.inode, name), name, ""), nil
+	return NewSnapshotsDir(d.root, fs.GenerateDynamicInode(d.inode, name), name, ""), nil
 }

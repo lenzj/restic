@@ -25,7 +25,6 @@ type Config struct {
 type Root struct {
 	repo      restic.Repository
 	cfg       Config
-	inode     uint64
 	snapshots restic.Snapshots
 	blobCache *blobCache
 
@@ -52,7 +51,6 @@ func NewRoot(repo restic.Repository, cfg Config) *Root {
 
 	root := &Root{
 		repo:      repo,
-		inode:     rootInode,
 		cfg:       cfg,
 		blobCache: newBlobCache(blobCacheSize),
 	}
@@ -63,10 +61,10 @@ func NewRoot(repo restic.Repository, cfg Config) *Root {
 	}
 
 	entries := map[string]fs.Node{
-		"snapshots": NewSnapshotsDir(root, fs.GenerateDynamicInode(root.inode, "snapshots"), "", ""),
-		"tags":      NewTagsDir(root, fs.GenerateDynamicInode(root.inode, "tags")),
-		"hosts":     NewHostsDir(root, fs.GenerateDynamicInode(root.inode, "hosts")),
-		"ids":       NewSnapshotsIDSDir(root, fs.GenerateDynamicInode(root.inode, "ids")),
+		"snapshots": NewSnapshotsDir(root, fs.GenerateDynamicInode(rootInode, "snapshots"), "", ""),
+		"tags":      NewTagsDir(root, fs.GenerateDynamicInode(rootInode, "tags")),
+		"hosts":     NewHostsDir(root, fs.GenerateDynamicInode(rootInode, "hosts")),
+		"ids":       NewSnapshotsIDSDir(root, fs.GenerateDynamicInode(rootInode, "ids")),
 	}
 
 	root.MetaDir = NewMetaDir(root, rootInode, entries)
