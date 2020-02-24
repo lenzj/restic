@@ -287,7 +287,7 @@ func (d *SnapshotsDir) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error) {
 			Type:  fuse.DT_Dir,
 		},
 		{
-			Inode: d.root.inode,
+			Inode: rootInode,
 			Name:  "..",
 			Type:  fuse.DT_Dir,
 		},
@@ -329,7 +329,7 @@ func (d *SnapshotsIDSDir) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error)
 			Type:  fuse.DT_Dir,
 		},
 		{
-			Inode: d.root.inode,
+			Inode: rootInode,
 			Name:  "..",
 			Type:  fuse.DT_Dir,
 		},
@@ -363,7 +363,7 @@ func (d *HostsDir) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error) {
 			Type:  fuse.DT_Dir,
 		},
 		{
-			Inode: d.root.inode,
+			Inode: rootInode,
 			Name:  "..",
 			Type:  fuse.DT_Dir,
 		},
@@ -397,7 +397,7 @@ func (d *TagsDir) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error) {
 			Type:  fuse.DT_Dir,
 		},
 		{
-			Inode: d.root.inode,
+			Inode: rootInode,
 			Name:  "..",
 			Type:  fuse.DT_Dir,
 		},
@@ -509,13 +509,13 @@ func (d *HostsDir) Lookup(ctx context.Context, name string) (fs.Node, error) {
 
 		_, ok := d.hosts[name]
 		if ok {
-			return NewSnapshotsDir(d.root, fs.GenerateDynamicInode(d.root.inode, name), "", name), nil
+			return NewSnapshotsDir(d.root, fs.GenerateDynamicInode(rootInode, name), "", name), nil
 		}
 
 		return nil, fuse.ENOENT
 	}
 
-	return NewSnapshotsDir(d.root, fs.GenerateDynamicInode(d.root.inode, name), "", name), nil
+	return NewSnapshotsDir(d.root, fs.GenerateDynamicInode(rootInode, name), "", name), nil
 }
 
 // Lookup returns a specific entry from the TagsDir.
@@ -532,11 +532,11 @@ func (d *TagsDir) Lookup(ctx context.Context, name string) (fs.Node, error) {
 
 		_, ok := d.tags[name]
 		if ok {
-			return NewSnapshotsDir(d.root, fs.GenerateDynamicInode(d.root.inode, name), name, ""), nil
+			return NewSnapshotsDir(d.root, fs.GenerateDynamicInode(rootInode, name), name, ""), nil
 		}
 
 		return nil, fuse.ENOENT
 	}
 
-	return NewSnapshotsDir(d.root, fs.GenerateDynamicInode(d.root.inode, name), name, ""), nil
+	return NewSnapshotsDir(d.root, fs.GenerateDynamicInode(rootInode, name), name, ""), nil
 }

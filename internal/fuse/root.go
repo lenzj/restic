@@ -14,6 +14,7 @@ import (
 
 	"golang.org/x/net/context"
 
+	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
 )
 
@@ -35,7 +36,7 @@ type Root struct {
 
 	lastCheck time.Time
 
-	*MetaDir
+	entries map[string]fs.Node
 
 	uid, gid uint32
 }
@@ -61,20 +62,70 @@ func NewRoot(ctx context.Context, repo restic.Repository, cfg Config) (*Root, er
 		root.gid = uint32(os.Getgid())
 	}
 
-	entries := map[string]fs.Node{
+	root.entries = map[string]fs.Node{
 		"snapshots": NewSnapshotsDir(root, fs.GenerateDynamicInode(rootInode, "snapshots"), "", ""),
 		"tags":      NewTagsDir(root, fs.GenerateDynamicInode(rootInode, "tags")),
 		"hosts":     NewHostsDir(root, fs.GenerateDynamicInode(rootInode, "hosts")),
 		"ids":       NewSnapshotsIDSDir(root, fs.GenerateDynamicInode(rootInode, "ids")),
 	}
 
-	root.MetaDir = NewMetaDir(root, rootInode, entries)
-
 	return root, nil
 }
 
+var _ = fs.HandleReadDirAller(&Root{})
+var _ = fs.NodeStringLookuper(&Root{})
+
 // Root is just there to satisfy fs.Root, it returns itself.
 func (r *Root) Root() (fs.Node, error) {
-	debug.Log("Root()")
+	debug.Log("Root.Root()")
 	return r, nil
+}
+
+// Attr returns the attributes for the root node.
+func (d *Root) Attr(ctx context.Context, attr *fuse.Attr) error {
+	attr.Inode = rootInode
+	attr.Mode = os.ModeDir | 0555
+	attr.Uid = d.uid
+	attr.Gid = d.gid
+
+	debug.Log("attr: %v", attr)
+	return nil
+}
+
+// ReadDirAll returns all entries directly below the root node.
+func (d *Root) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error) {
+	debug.Log("Root.ReadDirAll()")
+	items := []fuse.Dirent{
+		{
+			Inode: rootInode,
+			Name:  ".",
+			Type:  fuse.DT_Dir,
+		},
+		{
+			Inode: rootInode,
+			Name:  "..",
+			Type:  fuse.DT_Dir,
+		},
+	}
+
+	for name := range d.entries {
+		items = append(items, fuse.Dirent{
+			Inode: fs.GenerateDynamicInode(rootInode, name),
+			Name:  name,
+			Type:  fuse.DT_Dir,
+		})
+	}
+
+	return items, nil
+}
+
+// Lookup returns a specific entry from the root node.
+func (d *Root) Lookup(ctx context.Context, name string) (fs.Node, error) {
+	debug.Log("Root.Lookup(%s)", name)
+
+	if dir, ok := d.entries[name]; ok {
+		return dir, nil
+	}
+
+	return nil, fuse.ENOENT
 }
