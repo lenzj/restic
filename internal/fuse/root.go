@@ -33,7 +33,6 @@ type Root struct {
 	snapshots     restic.Snapshots
 	blobSizeCache *BlobSizeCache
 
-	snCount   int
 	lastCheck time.Time
 
 	*MetaDir

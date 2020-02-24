@@ -77,8 +77,8 @@ var _ = fs.NodeReadlinker(&snapshotLink{})
 
 // read tag names from the current repository-state.
 func updateTagNames(d *TagsDir) {
-	if d.snCount != d.root.snCount {
-		d.snCount = d.root.snCount
+	if d.snCount != len(d.root.snapshots) {
+		d.snCount = len(d.root.snapshots)
 		d.tags = make(map[string]bool, len(d.root.snapshots))
 		for _, snapshot := range d.root.snapshots {
 			for _, tag := range snapshot.Tags {
@@ -92,8 +92,8 @@ func updateTagNames(d *TagsDir) {
 
 // read host names from the current repository-state.
 func updateHostsNames(d *HostsDir) {
-	if d.snCount != d.root.snCount {
-		d.snCount = d.root.snCount
+	if d.snCount != len(d.root.snapshots) {
+		d.snCount = len(d.root.snapshots)
 		d.hosts = make(map[string]bool, len(d.root.snapshots))
 		for _, snapshot := range d.root.snapshots {
 			d.hosts[snapshot.Hostname] = true
@@ -103,8 +103,8 @@ func updateHostsNames(d *HostsDir) {
 
 // read snapshot id names from the current repository-state.
 func updateSnapshotIDSNames(d *SnapshotsIDSDir) {
-	if d.snCount != d.root.snCount {
-		d.snCount = d.root.snCount
+	if d.snCount != len(d.root.snapshots) {
+		d.snCount = len(d.root.snapshots)
 		for _, sn := range d.root.snapshots {
 			name := sn.ID().Str()
 			d.names[name] = sn
@@ -231,8 +231,7 @@ func updateSnapshots(ctx context.Context, root *Root) error {
 		return err
 	}
 
-	if root.snCount != len(snapshots) {
-		root.snCount = len(snapshots)
+	if len(snapshots) != len(root.snapshots) {
 		root.repo.LoadIndex(ctx)
 		root.snapshots = snapshots
 	}
@@ -243,8 +242,8 @@ func updateSnapshots(ctx context.Context, root *Root) error {
 
 // read snapshot timestamps from the current repository-state.
 func updateSnapshotNames(d *SnapshotsDir, template string) {
-	if d.snCount != d.root.snCount {
-		d.snCount = d.root.snCount
+	if d.snCount != len(d.root.snapshots) {
+		d.snCount = len(d.root.snapshots)
 		var latestTime time.Time
 		d.latest = ""
 		d.names = make(map[string]*restic.Snapshot, len(d.root.snapshots))
