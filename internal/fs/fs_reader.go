@@ -1,7 +1,6 @@
 package fs
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"path"
@@ -9,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/restic/restic/internal/debug"
 	"github.com/restic/restic/internal/errors"
 )
 
@@ -208,7 +208,7 @@ func (r *readerFile) Read(p []byte) (int, error) {
 
 	// return an error if we did not read any data
 	if err == io.EOF && !r.AllowEmptyFile && !r.bytesRead {
-		fmt.Printf("reader: %d bytes read, err %v, bytesRead %v, allowEmpty %v\n", n, err, r.bytesRead, r.AllowEmptyFile)
+		debug.Log("reader: %d bytes read, err %v, bytesRead %v, allowEmpty %v\n", n, err, r.bytesRead, r.AllowEmptyFile)
 		return n, &os.PathError{
 			Path: r.fakeFile.name,
 			Op:   "read",
