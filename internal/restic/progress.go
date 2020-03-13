@@ -3,10 +3,12 @@ package restic
 import (
 	"fmt"
 	"os"
+	"os/signal"
 	"strconv"
 	"sync"
 	"time"
 
+	"github.com/restic/restic/internal/debug"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -14,8 +16,6 @@ import (
 // overridden using the RESTIC_PROGRESS_FPS (frames per second) environment
 // variable.
 var minTickerTime = time.Second / 60
-
-var forceUpdateProgress = make(chan bool)
 
 func init() {
 	fps, err := strconv.ParseInt(os.Getenv("RESTIC_PROGRESS_FPS"), 10, 64)
@@ -38,6 +38,7 @@ type Progress struct {
 	curM       sync.Mutex
 	start      time.Time
 	ticker     *time.Ticker
+	signal     chan os.Signal
 	cancel     chan struct{}
 	d          time.Duration
 	lastUpdate time.Time
@@ -88,6 +89,8 @@ func (p *Progress) Start() {
 	if p.d != 0 {
 		p.ticker = time.NewTicker(p.d)
 	}
+
+	p.initSignals()
 
 	if p.OnStart != nil {
 		p.OnStart()
@@ -169,9 +172,13 @@ func (p *Progress) reporter() {
 		select {
 		case <-ticker:
 			updateProgress()
-		case <-forceUpdateProgress:
+		case sig := <-p.signal:
+			debug.Log("Signal received: %v\n", sig)
 			updateProgress()
 		case <-p.cancel:
+			if p.signal != nil {
+				signal.Stop(p.signal)
+			}
 			if p.ticker != nil {
 				p.ticker.Stop()
 			}
