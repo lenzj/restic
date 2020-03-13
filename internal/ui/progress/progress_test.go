@@ -1,4 +1,4 @@
-package restic
+package progress
 
 import (
 	"io/ioutil"

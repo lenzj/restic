@@ -1,6 +1,6 @@
 // +build darwin freebsd netbsd openbsd dragonfly
 
-package restic
+package progress
 
 import (
 	"os"

@@ -9,6 +9,7 @@ import (
 	"github.com/restic/restic/internal/index"
 	"github.com/restic/restic/internal/repository"
 	"github.com/restic/restic/internal/restic"
+	"github.com/restic/restic/internal/ui/progress"
 
 	"github.com/spf13/cobra"
 )
@@ -48,14 +49,14 @@ func shortenStatus(maxLength int, s string) string {
 }
 
 // newProgressMax returns a progress that counts blobs.
-func newProgressMax(show bool, max uint64, description string) *restic.Progress {
+func newProgressMax(show bool, max uint64, description string) *progress.Progress {
 	if !show {
 		return nil
 	}
 
-	p := restic.NewProgress()
+	p := progress.New()
 
-	p.OnUpdate = func(s restic.Stat, d time.Duration, ticker bool) {
+	p.OnUpdate = func(s progress.Stat, d time.Duration, ticker bool) {
 		status := fmt.Sprintf("[%s] %s  %d / %d %s",
 			formatDuration(d),
 			formatPercent(s.Blobs, max),
@@ -68,7 +69,7 @@ func newProgressMax(show bool, max uint64, description string) *restic.Progress 
 		PrintProgress("%s", status)
 	}
 
-	p.OnDone = func(s restic.Stat, d time.Duration, ticker bool) {
+	p.OnDone = func(s progress.Stat, d time.Duration, ticker bool) {
 		fmt.Printf("\n")
 	}
 
@@ -203,7 +204,7 @@ func pruneRepository(gopts GlobalOptions, repo restic.Repository) error {
 		}
 
 		debug.Log("processed snapshot %v", sn.ID())
-		bar.Report(restic.Stat{Blobs: 1})
+		bar.Report(progress.Stat{Blobs: 1})
 	}
 	bar.Done()
 
@@ -302,7 +303,7 @@ func pruneRepository(gopts GlobalOptions, repo restic.Repository) error {
 			if err != nil {
 				Warnf("unable to remove file %v from the repository\n", packID.Str())
 			}
-			bar.Report(restic.Stat{Blobs: 1})
+			bar.Report(progress.Stat{Blobs: 1})
 		}
 		bar.Done()
 	}

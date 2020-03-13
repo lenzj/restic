@@ -1,6 +1,6 @@
 // +build linux
 
-package restic
+package progress
 
 import (
 	"os"

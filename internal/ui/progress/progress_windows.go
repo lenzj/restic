@@ -1,3 +1,3 @@
-package restic
+package progress
 
 func (*Progress) initSignals() {}

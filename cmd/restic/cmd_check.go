@@ -14,6 +14,7 @@ import (
 	"github.com/restic/restic/internal/errors"
 	"github.com/restic/restic/internal/fs"
 	"github.com/restic/restic/internal/restic"
+	"github.com/restic/restic/internal/ui/progress"
 )
 
 var cmdCheck = &cobra.Command{
@@ -100,14 +101,14 @@ func stringToIntSlice(param string) (split []uint, err error) {
 	return result, nil
 }
 
-func newReadProgress(gopts GlobalOptions, todo restic.Stat) *restic.Progress {
+func newReadProgress(gopts GlobalOptions, todo progress.Stat) *progress.Progress {
 	if gopts.Quiet {
 		return nil
 	}
 
-	readProgress := restic.NewProgress()
+	readProgress := progress.New()
 
-	readProgress.OnUpdate = func(s restic.Stat, d time.Duration, ticker bool) {
+	readProgress.OnUpdate = func(s progress.Stat, d time.Duration, ticker bool) {
 		status := fmt.Sprintf("[%s] %s  %d / %d items",
 			formatDuration(d),
 			formatPercent(s.Blobs, todo.Blobs),
@@ -123,7 +124,7 @@ func newReadProgress(gopts GlobalOptions, todo restic.Stat) *restic.Progress {
 		PrintProgress("%s", status)
 	}
 
-	readProgress.OnDone = func(s restic.Stat, d time.Duration, ticker bool) {
+	readProgress.OnDone = func(s progress.Stat, d time.Duration, ticker bool) {
 		fmt.Printf("\nduration: %s\n", formatDuration(d))
 	}
 
@@ -282,7 +283,7 @@ func runCheck(opts CheckOptions, gopts GlobalOptions, args []string) error {
 			Verbosef("read all data\n")
 		}
 
-		p := newReadProgress(gopts, restic.Stat{Blobs: packCount})
+		p := newReadProgress(gopts, progress.Stat{Blobs: packCount})
 		errChan := make(chan error)
 
 		go chkr.ReadPacks(gopts.ctx, packs, p, errChan)

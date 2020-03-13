@@ -1,4 +1,4 @@
-package restic
+package progress
 
 import (
 	"fmt"
@@ -30,8 +30,8 @@ func init() {
 // Progress reports progress on an operation.
 type Progress struct {
 	OnStart  func()
-	OnUpdate ProgressFunc
-	OnDone   ProgressFunc
+	OnUpdate Callback
+	OnDone   Callback
 	fnM      sync.Mutex
 
 	cur        Stat
@@ -57,15 +57,11 @@ type Stat struct {
 	Errors uint64
 }
 
-// ProgressFunc is used to report progress back to the user.
-type ProgressFunc func(s Stat, runtime time.Duration, ticker bool)
+// A Callback is called for each progress update.
+type Callback func(s Stat, runtime time.Duration, ticker bool)
 
-// NewProgress returns a new progress reporter. When Start() is called, the
-// function OnStart is executed once. Afterwards the function OnUpdate is
-// called when new data arrives or at least every d interval. The function
-// OnDone is called when Done() is called. Both functions are called
-// synchronously and can use shared state.
-func NewProgress() *Progress {
+// New returns a new progress reporter.
+func New() *Progress {
 	p := &Progress{}
 
 	p.isTerminal = terminal.IsTerminal(int(os.Stdout.Fd()))
@@ -77,6 +73,12 @@ func NewProgress() *Progress {
 }
 
 // Start resets and runs the progress reporter.
+//
+// The function OnStart is executed once. Afterwards the function OnUpdate is
+// called when new data arrives or at least every d interval. The function
+// OnDone is called when Done() is called. Both functions are called
+// synchronously and can use shared state, but must not call back into the
+// progress reporter.
 func (p *Progress) Start() {
 	if p == nil || p.running {
 		return

@@ -10,13 +10,14 @@ import (
 	"github.com/restic/restic/internal/fs"
 	"github.com/restic/restic/internal/pack"
 	"github.com/restic/restic/internal/restic"
+	"github.com/restic/restic/internal/ui/progress"
 )
 
 // Repack takes a list of packs together with a list of blobs contained in
 // these packs. Each pack is loaded and the blobs listed in keepBlobs is saved
 // into a new pack. Returned is the list of obsolete packs which can then
 // be removed.
-func Repack(ctx context.Context, repo restic.Repository, packs restic.IDSet, keepBlobs restic.BlobSet, p *restic.Progress) (obsoletePacks restic.IDSet, err error) {
+func Repack(ctx context.Context, repo restic.Repository, packs restic.IDSet, keepBlobs restic.BlobSet, p *progress.Progress) (obsoletePacks restic.IDSet, err error) {
 	debug.Log("repacking %d packs while keeping %d blobs", len(packs), len(keepBlobs))
 
 	for packID := range packs {
@@ -102,7 +103,7 @@ func Repack(ctx context.Context, repo restic.Repository, packs restic.IDSet, kee
 			return nil, errors.Wrap(err, "Remove")
 		}
 		if p != nil {
-			p.Report(restic.Stat{Blobs: 1})
+			p.Report(progress.Stat{Blobs: 1})
 		}
 	}
 
