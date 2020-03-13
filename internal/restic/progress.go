@@ -15,7 +15,6 @@ import (
 // variable.
 var minTickerTime = time.Second / 60
 
-var isTerminal = terminal.IsTerminal(int(os.Stdout.Fd()))
 var forceUpdateProgress = make(chan bool)
 
 func init() {
@@ -44,7 +43,8 @@ type Progress struct {
 	d          time.Duration
 	lastUpdate time.Time
 
-	running bool
+	isTerminal bool
+	running    bool
 }
 
 // Stat captures newly done parts of the operation.
@@ -66,11 +66,14 @@ type ProgressFunc func(s Stat, runtime time.Duration, ticker bool)
 // OnDone is called when Done() is called. Both functions are called
 // synchronously and can use shared state.
 func NewProgress() *Progress {
-	var d time.Duration
-	if isTerminal {
-		d = time.Second
+	p := &Progress{}
+
+	p.isTerminal = terminal.IsTerminal(int(os.Stdout.Fd()))
+	if p.isTerminal {
+		p.d = time.Second
 	}
-	return &Progress{d: d}
+
+	return p
 }
 
 // Start resets and runs the progress reporter.
@@ -126,7 +129,7 @@ func (p *Progress) Report(s Stat) {
 	p.cur.Add(s)
 	cur := p.cur
 	needUpdate := false
-	if isTerminal && time.Since(p.lastUpdate) > minTickerTime {
+	if p.isTerminal && time.Since(p.lastUpdate) > minTickerTime {
 		p.lastUpdate = time.Now()
 		needUpdate = true
 	}
