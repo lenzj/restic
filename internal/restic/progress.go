@@ -37,7 +37,7 @@ type Progress struct {
 	cur        Stat
 	curM       sync.Mutex
 	start      time.Time
-	c          *time.Ticker
+	ticker     *time.Ticker
 	cancel     chan struct{}
 	o          *sync.Once
 	d          time.Duration
@@ -87,9 +87,8 @@ func (p *Progress) Start() {
 	p.running = true
 	p.Reset()
 	p.start = time.Now()
-	p.c = nil
 	if p.d != 0 {
-		p.c = time.NewTicker(p.d)
+		p.ticker = time.NewTicker(p.d)
 	}
 
 	if p.OnStart != nil {
@@ -164,8 +163,8 @@ func (p *Progress) reporter() {
 	}
 
 	var ticker <-chan time.Time
-	if p.c != nil {
-		ticker = p.c.C
+	if p.ticker != nil {
+		ticker = p.ticker.C
 	}
 
 	for {
@@ -175,8 +174,8 @@ func (p *Progress) reporter() {
 		case <-forceUpdateProgress:
 			updateProgress()
 		case <-p.cancel:
-			if p.c != nil {
-				p.c.Stop()
+			if p.ticker != nil {
+				p.ticker.Stop()
 			}
 			return
 		}
