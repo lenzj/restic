@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"path/filepath"
 
+	"github.com/restic/restic/internal/json"
 	"github.com/restic/restic/internal/restic"
 	"github.com/restic/restic/internal/walker"
 

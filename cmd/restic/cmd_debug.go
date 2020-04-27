@@ -1,3 +1,4 @@
+//go:build debug
 // +build debug
 
 package main
@@ -6,7 +7,6 @@ import (
 	"context"
 	"crypto/aes"
 	"crypto/cipher"
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -20,6 +20,7 @@ import (
 	"github.com/restic/restic/internal/backend"
 	"github.com/restic/restic/internal/crypto"
 	"github.com/restic/restic/internal/errors"
+	"github.com/restic/restic/internal/json"
 	"github.com/restic/restic/internal/pack"
 	"github.com/restic/restic/internal/repository"
 	"github.com/restic/restic/internal/restic"

@@ -6,12 +6,12 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/binary"
-	"encoding/json"
 	"io"
 	"testing"
 
 	"github.com/restic/restic/internal/backend/mem"
 	"github.com/restic/restic/internal/crypto"
+	"github.com/restic/restic/internal/json"
 	"github.com/restic/restic/internal/pack"
 	"github.com/restic/restic/internal/restic"
 	rtest "github.com/restic/restic/internal/test"
