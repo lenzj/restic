@@ -7,7 +7,12 @@ import "os"
 // openTerminal opens the console input and screen buffers.
 func openTerminal() (t *controllingTerminal, err error) {
 	// https://docs.microsoft.com/en-us/windows/console/console-handles
-	conin, err := os.Open("CONIN$")
+
+	// If we open CONIN$ in read-only mode, windows.SetConsoleMode in
+	// terminal.ReadPassword fails with Access denied. Opening it in
+	// read-write mode adds the flag GENERIC_WRITE, which the standard
+	// handles have, too.
+	conin, err := os.OpenFile("CONIN$", os.O_RDWR, 0)
 	if err != nil {
 		return nil, err
 	}
