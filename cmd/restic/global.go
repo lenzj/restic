@@ -271,17 +271,7 @@ func resolvePassword(opts GlobalOptions) (string, error) {
 		return "", errors.Fatalf("Password file and command are mutually exclusive options")
 	}
 	if opts.PasswordCommand != "" {
-		args, err := backend.SplitShellStrings(opts.PasswordCommand)
-		if err != nil {
-			return "", err
-		}
-		cmd := exec.Command(args[0], args[1:]...)
-		cmd.Stderr = os.Stderr
-		output, err := cmd.Output()
-		if err != nil {
-			return "", err
-		}
-		return (strings.TrimSpace(string(output))), nil
+		return readPasswordCommand(opts.PasswordCommand)
 	}
 	if opts.PasswordFile != "" {
 		s, err := textfile.Read(opts.PasswordFile)
@@ -296,6 +286,23 @@ func resolvePassword(opts GlobalOptions) (string, error) {
 	}
 
 	return "", nil
+}
+
+// readPasswordCommand reads the password from the standard output of command
+// cmd.
+func readPasswordCommand(command string) (password string, err error) {
+	args, err := backend.SplitShellStrings(command)
+	if err != nil {
+		return "", err
+	}
+
+	cmd := exec.Command(args[0], args[1:]...)
+	cmd.Stderr = os.Stderr
+	output, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(output)), nil
 }
 
 // ReadPasswordTerminal reads the password from the controlling terminal.
