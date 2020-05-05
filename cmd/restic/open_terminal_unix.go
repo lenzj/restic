@@ -2,7 +2,10 @@
 
 package main
 
-import "os"
+import (
+	"os"
+	"os/exec"
+)
 
 var devtty = "/dev/tty" // Variable so that the test can reset it.
 
@@ -12,3 +15,9 @@ func openTerminal() (*controllingTerminal, error) {
 }
 
 type controllingTerminal = os.File
+
+// passTerminal passes tty as stdin and stdout to cmd.
+func passTerminal(cmd *exec.Cmd, tty *controllingTerminal) {
+	cmd.Stdin = tty
+	cmd.Stdout = tty
+}

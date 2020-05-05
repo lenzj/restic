@@ -296,8 +296,15 @@ func readPasswordCommand(command string) (password string, err error) {
 		return "", err
 	}
 
+	tty, err := openTerminal()
+	if err != nil {
+		return "", err
+	}
+	defer tty.Close()
+
 	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Stderr = os.Stderr
+	passTerminal(cmd, tty)
 	output, err := cmd.Output()
 	if err != nil {
 		return "", err

@@ -2,7 +2,10 @@
 
 package main
 
-import "os"
+import (
+	"os"
+	"os/exec"
+)
 
 // openTerminal opens the console input and screen buffers.
 func openTerminal() (t *controllingTerminal, err error) {
@@ -46,4 +49,10 @@ func (t *controllingTerminal) Close() error {
 		return err1
 	}
 	return err2
+}
+
+// passTerminal passes tty as stdin and stdout to cmd.
+func passTerminal(cmd *exec.Cmd, tty *controllingTerminal) {
+	cmd.Stdin = tty.conin
+	cmd.Stdout = tty.conout
 }
