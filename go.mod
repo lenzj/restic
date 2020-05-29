@@ -1,7 +1,7 @@
 module github.com/restic/restic
 
 require (
-	bazil.org/fuse v0.0.0-20180421153158-65cc252bf669
+	bazil.org/fuse v0.0.0-20191225072544-27e78e7d88df
 	cloud.google.com/go v0.37.4 // indirect
 	github.com/Azure/azure-sdk-for-go v27.3.0+incompatible
 	github.com/Azure/go-autorest/autorest v0.9.2 // indirect
@@ -20,7 +20,6 @@ require (
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/kurin/blazer v0.5.3
 	github.com/marstr/guid v1.1.0 // indirect
-	github.com/mattn/go-isatty v0.0.7
 	github.com/minio/minio-go/v6 v6.0.43
 	github.com/ncw/swift v1.0.47
 	github.com/pkg/errors v0.8.1
@@ -34,11 +33,11 @@ require (
 	github.com/spf13/pflag v1.0.3
 	github.com/stretchr/testify v1.3.0 // indirect
 	go.opencensus.io v0.20.2 // indirect
-	golang.org/x/crypto v0.0.0-20190513172903-22d7a77e9e5f
-	golang.org/x/net v0.0.0-20190522155817-f3200d17e092
+	golang.org/x/crypto v0.0.0-20200427165652-729f1e841bcc
+	golang.org/x/net v0.0.0-20200425230154-ff2c4b7c35a0
 	golang.org/x/oauth2 v0.0.0-20190402181905-9f3314589c9a
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
-	golang.org/x/sys v0.0.0-20190422165155-953cdadca894
+	golang.org/x/sys v0.0.0-20200323222414-85ca7c5b95cd
 	golang.org/x/text v0.3.1-0.20180807135948-17ff2d5776d2
 	google.golang.org/api v0.3.2
 	google.golang.org/appengine v1.5.0 // indirect

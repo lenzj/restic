@@ -54,6 +54,13 @@ command and enter the same password twice:
    Remembering your password is important! If you lose it, you won't be
    able to access data stored in the repository.
 
+.. warning::
+
+   On Linux, storing the backup repository on a CIFS (SMB) share is not
+   recommended due to compatibility issues. Either use another backend
+   or set the environment variable `GODEBUG` to `asyncpreemptoff=1`.
+   Refer to GitHub issue #2659 for further explanations.
+
 SFTP
 ****
 
@@ -86,10 +93,21 @@ specify the user this way: ``user@domain@host``.
           want to specify a path relative to the user's home directory, pass a
           relative path to the sftp backend.
 
-The backend config string does not allow specifying a port. If you need
-to contact an sftp server on a different port, you can create an entry
-in the ``ssh`` file, usually located in your user's home directory at
-``~/.ssh/config`` or in ``/etc/ssh/ssh_config``:
+If you need to specify a port number or IPv6 address, you'll need to use
+URL syntax. E.g., the repository ``/srv/restic-repo`` on ``[::1]`` (localhost)
+at port 2222 with username ``user`` can be specified as
+
+::
+
+    sftp://user@[::1]:2222//srv/restic-repo
+
+Note the double slash: the first slash separates the connection settings from
+the path, while the second is the start of the path. To specify a relative
+path, use one slash.
+
+Alternatively, you can create an entry in the ``ssh`` configuration file,
+usually located in your home directory at ``~/.ssh/config`` or in
+``/etc/ssh/ssh_config``:
 
 ::
 
@@ -257,7 +275,7 @@ Wasabi
 Due to it's S3 conformance, Wasabi can be used as a storage provider for a restic repository.
 
 -  Create a Wasabi bucket using the `Wasabi Console <https://console.wasabisys.com>`__.
--  Determine the correct Wasabi service URL for your bucket `here <https://wasabi-support.zendesk.com/hc/en-us/articles/360015106031-What-are-the-service-URLs-for-Wasabi-s-different-regions->__`.
+-  Determine the correct Wasabi service URL for your bucket `here <https://wasabi-support.zendesk.com/hc/en-us/articles/360015106031-What-are-the-service-URLs-for-Wasabi-s-different-regions->`__.
 
 You must first setup the following environment variables with the
 credentials of your Wasabi account.
