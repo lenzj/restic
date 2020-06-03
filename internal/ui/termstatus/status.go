@@ -8,6 +8,8 @@ import (
 	"io"
 	"os"
 	"strings"
+
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 // Terminal is used to write messages and display status lines which can be
@@ -87,10 +89,6 @@ func (t *Terminal) Run(ctx context.Context) {
 	t.runWithoutStatus(ctx)
 }
 
-type stringWriter interface {
-	WriteString(string) (int, error)
-}
-
 // run listens on the channels and updates the terminal screen.
 func (t *Terminal) run(ctx context.Context) {
 	var status []string
@@ -126,22 +124,14 @@ func (t *Terminal) run(ctx context.Context) {
 				dst = t.wr
 			}
 
-			var err error
-			if w, ok := dst.(stringWriter); ok {
-				_, err = w.WriteString(msg.line)
-			} else {
-				_, err = dst.Write([]byte(msg.line))
-			}
-
-			if err != nil {
+			if _, err := io.WriteString(dst, msg.line); err != nil {
 				fmt.Fprintf(os.Stderr, "write failed: %v\n", err)
 				continue
 			}
 
 			t.writeStatus(status)
 
-			err = t.wr.Flush()
-			if err != nil {
+			if err := t.wr.Flush(); err != nil {
 				fmt.Fprintf(os.Stderr, "flush failed: %v\n", err)
 			}
 
@@ -192,7 +182,6 @@ func (t *Terminal) runWithoutStatus(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case msg := <-t.msg:
-			var err error
 			var flush func() error
 
 			var dst io.Writer
@@ -203,13 +192,7 @@ func (t *Terminal) runWithoutStatus(ctx context.Context) {
 				flush = t.wr.Flush
 			}
 
-			if w, ok := dst.(stringWriter); ok {
-				_, err = w.WriteString(msg.line)
-			} else {
-				_, err = dst.Write([]byte(msg.line))
-			}
-
-			if err != nil {
+			if _, err := io.WriteString(dst, msg.line); err != nil {
 				fmt.Fprintf(os.Stderr, "write failed: %v\n", err)
 			}
 
@@ -217,8 +200,7 @@ func (t *Terminal) runWithoutStatus(ctx context.Context) {
 				continue
 			}
 
-			err = flush()
-			if err != nil {
+			if err := flush(); err != nil {
 				fmt.Fprintf(os.Stderr, "flush failed: %v\n", err)
 			}
 
@@ -310,7 +292,7 @@ func (t *Terminal) SetStatus(lines []string) {
 		return
 	}
 
-	width, _, err := getTermSize(t.fd)
+	width, _, err := terminal.GetSize(int(t.fd))
 	if err != nil || width <= 0 {
 		// use 80 columns by default
 		width = 80
