@@ -22,18 +22,30 @@ func NewMasterIndex() *MasterIndex {
 }
 
 // Lookup queries all known Indexes for the ID and returns the first match.
-func (mi *MasterIndex) Lookup(id restic.ID, tpe restic.BlobType) (blobs []restic.PackedBlob, found bool) {
+func (mi *MasterIndex) Lookup(id restic.ID, tpe restic.BlobType) (blob restic.PackedBlob, found bool) {
 	mi.idxMutex.RLock()
 	defer mi.idxMutex.RUnlock()
 
 	for _, idx := range mi.idx {
-		blobs, found = idx.Lookup(id, tpe)
+		blob, found = idx.Lookup(id, tpe)
 		if found {
 			return
 		}
 	}
 
-	return nil, false
+	return restic.PackedBlob{}, false
+}
+
+// Lookup queries all known Indexes for the ID and returns all matches.
+func (mi *MasterIndex) LookupAll(id restic.ID, tpe restic.BlobType) (blobs []restic.PackedBlob) {
+	mi.idxMutex.RLock()
+	defer mi.idxMutex.RUnlock()
+
+	for _, idx := range mi.idx {
+		blobs = append(blobs, idx.LookupAll(id, tpe)...)
+	}
+
+	return blobs
 }
 
 // LookupSize queries all known Indexes for the ID and returns the first match.

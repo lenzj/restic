@@ -51,7 +51,7 @@ type packInfo struct {
 // fileRestorer restores set of files
 type fileRestorer struct {
 	key        *crypto.Key
-	idx        func(restic.ID, restic.BlobType) ([]restic.PackedBlob, bool)
+	idx        func(restic.ID, restic.BlobType) (restic.PackedBlob, bool)
 	packLoader func(ctx context.Context, h restic.Handle, length int, offset int64, fn func(rd io.Reader) error) error
 
 	filesWriter *filesWriter
@@ -63,7 +63,7 @@ type fileRestorer struct {
 func newFileRestorer(dst string,
 	packLoader func(ctx context.Context, h restic.Handle, length int, offset int64, fn func(rd io.Reader) error) error,
 	key *crypto.Key,
-	idx func(restic.ID, restic.BlobType) ([]restic.PackedBlob, bool)) *fileRestorer {
+	idx func(restic.ID, restic.BlobType) (restic.PackedBlob, bool)) *fileRestorer {
 
 	return &fileRestorer{
 		key:         key,
@@ -92,7 +92,7 @@ func (r *fileRestorer) forEachBlob(blobIDs []restic.ID, fn func(packID restic.ID
 		if !found {
 			return errors.Errorf("Unknown blob %s", blobID.String())
 		}
-		fn(packs[0].PackID, packs[0].Blob)
+		fn(packs.PackID, packs.Blob)
 	}
 
 	return nil
@@ -208,14 +208,9 @@ func (r *fileRestorer) downloadPack(ctx context.Context, pack *packInfo) {
 			})
 		} else if packsMap, ok := file.blobs.(map[restic.ID][]fileBlobInfo); ok {
 			for _, blob := range packsMap[pack.id] {
-				idxPacks, found := r.idx(blob.id, restic.DataBlob)
+				idxPack, found := r.idx(blob.id, restic.DataBlob)
 				if found {
-					for _, idxPack := range idxPacks {
-						if idxPack.PackID.Equal(pack.id) {
-							addBlob(idxPack.Blob, blob.offset)
-							break
-						}
-					}
+					addBlob(idxPack.Blob, blob.offset)
 				}
 			}
 		}

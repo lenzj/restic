@@ -210,25 +210,36 @@ func (idx *Index) indexEntryToPackedBlob(h restic.BlobHandle, entry indexEntry) 
 }
 
 // Lookup queries the index for the blob ID and returns a restic.PackedBlob.
-func (idx *Index) Lookup(id restic.ID, tpe restic.BlobType) (blobs []restic.PackedBlob, found bool) {
+func (idx *Index) Lookup(id restic.ID, tpe restic.BlobType) (blob restic.PackedBlob, found bool) {
 	idx.m.Lock()
 	defer idx.m.Unlock()
 
 	h := restic.BlobHandle{ID: id, Type: tpe}
 
-	blob, ok := idx.blob[h]
+	entry, ok := idx.blob[h]
 	if ok {
-		blobList := idx.withDuplicates(h, blob)
-		blobs = make([]restic.PackedBlob, 0, len(blobList))
-
-		for _, p := range blobList {
-			blobs = append(blobs, idx.indexEntryToPackedBlob(h, p))
-		}
-
-		return blobs, true
+		return idx.indexEntryToPackedBlob(h, entry), true
 	}
 
-	return nil, false
+	return restic.PackedBlob{}, false
+}
+
+// LookupAll queries the index for the blob ID and returns all entries including
+// duplicates.
+func (idx *Index) LookupAll(id restic.ID, tpe restic.BlobType) (blobs []restic.PackedBlob) {
+	idx.m.Lock()
+	defer idx.m.Unlock()
+
+	h := restic.BlobHandle{ID: id, Type: tpe}
+
+	entry, ok := idx.blob[h]
+	if ok {
+		entries := idx.withDuplicates(h, entry)
+		for _, entry := range entries {
+			blobs = append(blobs, idx.indexEntryToPackedBlob(h, entry))
+		}
+	}
+	return blobs
 }
 
 // ListPack returns a list of blobs contained in a pack.
@@ -261,12 +272,12 @@ func (idx *Index) Has(id restic.ID, tpe restic.BlobType) bool {
 // LookupSize returns the length of the plaintext content of the blob with the
 // given id.
 func (idx *Index) LookupSize(id restic.ID, tpe restic.BlobType) (plaintextLength uint, found bool) {
-	blobs, found := idx.Lookup(id, tpe)
+	blob, found := idx.Lookup(id, tpe)
 	if !found {
 		return 0, found
 	}
 
-	return uint(restic.PlaintextLength(int(blobs[0].Length))), true
+	return uint(restic.PlaintextLength(int(blob.Length))), true
 }
 
 // Supersedes returns the list of indexes this index supersedes, if any.

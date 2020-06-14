@@ -313,8 +313,8 @@ func (res *Restorer) VerifyFiles(ctx context.Context, dst string) (int, error) {
 
 			offset := int64(0)
 			for _, blobID := range node.Content {
-				blobs, _ := res.repo.Index().Lookup(blobID, restic.DataBlob)
-				length := blobs[0].Length - uint(crypto.Extension)
+				blob, _ := res.repo.Index().Lookup(blobID, restic.DataBlob)
+				length := blob.Length - uint(crypto.Extension)
 				buf := make([]byte, length) // TODO do I want to reuse the buffer somehow?
 				_, err = file.ReadAt(buf, offset)
 				if err != nil {

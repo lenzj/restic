@@ -43,16 +43,13 @@ func TestMasterIndexLookup(t *testing.T) {
 	mIdx.Insert(idx1)
 	mIdx.Insert(idx2)
 
-	blobs, found := mIdx.Lookup(idInIdx1, restic.DataBlob)
-	rtest.Assert(t, found, "Expected to find blob id %v from index 1", idInIdx1)
+	blobs := mIdx.LookupAll(idInIdx1, restic.DataBlob)
 	rtest.Equals(t, []restic.PackedBlob{blob1}, blobs)
 
-	blobs, found = mIdx.Lookup(idInIdx2, restic.DataBlob)
-	rtest.Assert(t, found, "Expected to find blob id %v from index 2", idInIdx2)
+	blobs = mIdx.LookupAll(idInIdx2, restic.DataBlob)
 	rtest.Equals(t, []restic.PackedBlob{blob2}, blobs)
 
-	blobs, found = mIdx.Lookup(restic.NewRandomID(), restic.DataBlob)
-	rtest.Assert(t, !found, "Expected to not find a blob when fetching with a random id")
+	blobs = mIdx.LookupAll(restic.NewRandomID(), restic.DataBlob)
 	rtest.Assert(t, blobs == nil, "Expected no blobs when fetching with a random id")
 }
 
