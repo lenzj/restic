@@ -224,9 +224,9 @@ func (idx *Index) Lookup(id restic.ID, tpe restic.BlobType) (blob restic.PackedB
 	return restic.PackedBlob{}, false
 }
 
-// LookupAll queries the index for the blob ID and returns all entries including
-// duplicates.
-func (idx *Index) LookupAll(id restic.ID, tpe restic.BlobType) (blobs []restic.PackedBlob) {
+// LookupAll queries the index for the blob id. It appends all entries,
+// including duplicates, to blobs and returns the result.
+func (idx *Index) LookupAll(id restic.ID, tpe restic.BlobType, blobs []restic.PackedBlob) []restic.PackedBlob {
 	idx.m.Lock()
 	defer idx.m.Unlock()
 

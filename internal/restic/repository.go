@@ -61,7 +61,7 @@ type Lister interface {
 type Index interface {
 	Has(ID, BlobType) bool
 	Lookup(ID, BlobType) (PackedBlob, bool)
-	LookupAll(ID, BlobType) []PackedBlob
+	LookupAll(ID, BlobType, []PackedBlob) []PackedBlob
 	Count(BlobType) uint
 
 	// Each returns a channel that yields all blobs known to the index. When

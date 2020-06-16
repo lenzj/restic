@@ -64,8 +64,9 @@ func TestIndexSerialize(t *testing.T) {
 	err = idx2.Encode(wr2)
 	rtest.OK(t, err)
 
+	var list, list2 []restic.PackedBlob
 	for _, testBlob := range tests {
-		list := idx.LookupAll(testBlob.id, testBlob.tpe)
+		list = idx.LookupAll(testBlob.id, testBlob.tpe, list[:0])
 		if len(list) != 1 {
 			t.Errorf("expected one result for blob %v, got %v: %v", testBlob.id.Str(), len(list), list)
 		}
@@ -76,7 +77,7 @@ func TestIndexSerialize(t *testing.T) {
 		rtest.Equals(t, testBlob.offset, result.Offset)
 		rtest.Equals(t, testBlob.length, result.Length)
 
-		list2 := idx2.LookupAll(testBlob.id, testBlob.tpe)
+		list2 = idx2.LookupAll(testBlob.id, testBlob.tpe, list2[:0])
 		if len(list2) != 1 {
 			t.Errorf("expected one result for blob %v, got %v: %v", testBlob.id.Str(), len(list2), list2)
 		}
@@ -144,7 +145,7 @@ func TestIndexSerialize(t *testing.T) {
 
 	// all new blobs must be in the index
 	for _, testBlob := range newtests {
-		list := idx3.LookupAll(testBlob.id, testBlob.tpe)
+		list = idx3.LookupAll(testBlob.id, testBlob.tpe, list[:0])
 		if len(list) != 1 {
 			t.Errorf("expected one result for blob %v, got %v: %v", testBlob.id.Str(), len(list), list)
 		}
@@ -288,8 +289,9 @@ func TestIndexUnserialize(t *testing.T) {
 	idx, err := repository.DecodeIndex(docExample)
 	rtest.OK(t, err)
 
+	var list []restic.PackedBlob
 	for _, test := range exampleTests {
-		list := idx.LookupAll(test.id, test.tpe)
+		list = idx.LookupAll(test.id, test.tpe, list[:0])
 		if len(list) != 1 {
 			t.Errorf("expected one result for blob %v, got %v: %v", test.id.Str(), len(list), list)
 		}
@@ -334,8 +336,9 @@ func TestIndexUnserializeOld(t *testing.T) {
 	idx, err := repository.DecodeOldIndex(docOldExample)
 	rtest.OK(t, err)
 
+	var list []restic.PackedBlob
 	for _, test := range exampleTests {
-		list := idx.LookupAll(test.id, test.tpe)
+		list = idx.LookupAll(test.id, test.tpe, list[:0])
 		if len(list) != 1 {
 			t.Errorf("expected one result for blob %v, got %v: %v", test.id.Str(), len(list), list)
 		}

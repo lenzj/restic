@@ -36,13 +36,14 @@ func (mi *MasterIndex) Lookup(id restic.ID, tpe restic.BlobType) (blob restic.Pa
 	return restic.PackedBlob{}, false
 }
 
-// Lookup queries all known Indexes for the ID and returns all matches.
-func (mi *MasterIndex) LookupAll(id restic.ID, tpe restic.BlobType) (blobs []restic.PackedBlob) {
+// LookupAll queries all known indexes for the blob id. It appends all entries,
+// including duplicates, to blobs and returns the result.
+func (mi *MasterIndex) LookupAll(id restic.ID, tpe restic.BlobType, blobs []restic.PackedBlob) []restic.PackedBlob {
 	mi.idxMutex.RLock()
 	defer mi.idxMutex.RUnlock()
 
 	for _, idx := range mi.idx {
-		blobs = append(blobs, idx.LookupAll(id, tpe)...)
+		blobs = idx.LookupAll(id, tpe, blobs)
 	}
 
 	return blobs

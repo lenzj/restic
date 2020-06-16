@@ -456,19 +456,21 @@ func (f *Finder) packsToBlobs(ctx context.Context, packs []string) error {
 	return nil
 }
 
-func (f *Finder) findObjectPack(ctx context.Context, id string, t restic.BlobType) {
+// findObjectPack reports on packs having the blobs with the given id and type.
+// Blobs and the return value are scratch space, passed around for reuse.
+func (f *Finder) findObjectPack(ctx context.Context, id string, t restic.BlobType, blobs []restic.PackedBlob) []restic.PackedBlob {
 	idx := f.repo.Index()
 
 	rid, err := restic.ParseID(id)
 	if err != nil {
 		Printf("Note: cannot find pack for object '%s', unable to parse ID: %v\n", id, err)
-		return
+		return blobs
 	}
 
-	blobs := idx.LookupAll(rid, t)
+	blobs = idx.LookupAll(rid, t, blobs[:0])
 	if len(blobs) == 0 {
 		Printf("Object %s not found in the index\n", rid.Str())
-		return
+		return blobs
 	}
 
 	for _, b := range blobs {
@@ -477,15 +479,19 @@ func (f *Finder) findObjectPack(ctx context.Context, id string, t restic.BlobTyp
 			break
 		}
 	}
+
+	return blobs
 }
 
 func (f *Finder) findObjectsPacks(ctx context.Context) {
+	var blobs []restic.PackedBlob
+
 	for i := range f.blobIDs {
-		f.findObjectPack(ctx, i, restic.DataBlob)
+		blobs = f.findObjectPack(ctx, i, restic.DataBlob, blobs)
 	}
 
 	for i := range f.treeIDs {
-		f.findObjectPack(ctx, i, restic.TreeBlob)
+		blobs = f.findObjectPack(ctx, i, restic.TreeBlob, blobs)
 	}
 }
 
