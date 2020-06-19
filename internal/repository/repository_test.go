@@ -34,7 +34,7 @@ func TestSave(t *testing.T) {
 		id := restic.Hash(data)
 
 		// save
-		sid, err := repo.SaveBlob(context.TODO(), restic.DataBlob, data, restic.ID{})
+		sid, _, err := repo.SaveBlob(context.TODO(), restic.DataBlob, data, restic.ID{}, false)
 		rtest.OK(t, err)
 
 		rtest.Equals(t, id, sid)
@@ -69,7 +69,7 @@ func TestSaveFrom(t *testing.T) {
 		id := restic.Hash(data)
 
 		// save
-		id2, err := repo.SaveBlob(context.TODO(), restic.DataBlob, data, id)
+		id2, _, err := repo.SaveBlob(context.TODO(), restic.DataBlob, data, id, false)
 		rtest.OK(t, err)
 		rtest.Equals(t, id, id2)
 
@@ -108,7 +108,7 @@ func BenchmarkSaveAndEncrypt(t *testing.B) {
 
 	for i := 0; i < t.N; i++ {
 		// save
-		_, err = repo.SaveBlob(context.TODO(), restic.DataBlob, data, id)
+		_, _, err = repo.SaveBlob(context.TODO(), restic.DataBlob, data, id, false)
 		rtest.OK(t, err)
 	}
 }
@@ -158,7 +158,7 @@ func TestLoadBlob(t *testing.T) {
 	_, err := io.ReadFull(rnd, buf)
 	rtest.OK(t, err)
 
-	id, err := repo.SaveBlob(context.TODO(), restic.DataBlob, buf, restic.ID{})
+	id, _, err := repo.SaveBlob(context.TODO(), restic.DataBlob, buf, restic.ID{}, false)
 	rtest.OK(t, err)
 	rtest.OK(t, repo.Flush(context.Background()))
 
@@ -187,7 +187,7 @@ func BenchmarkLoadBlob(b *testing.B) {
 	_, err := io.ReadFull(rnd, buf)
 	rtest.OK(b, err)
 
-	id, err := repo.SaveBlob(context.TODO(), restic.DataBlob, buf, restic.ID{})
+	id, _, err := repo.SaveBlob(context.TODO(), restic.DataBlob, buf, restic.ID{}, false)
 	rtest.OK(b, err)
 	rtest.OK(b, repo.Flush(context.Background()))
 
@@ -197,6 +197,10 @@ func BenchmarkLoadBlob(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		var err error
 		buf, err = repo.LoadBlob(context.TODO(), restic.DataBlob, id, buf)
+
+		// Checking the SHA-256 with restic.Hash can make up 38% of the time
+		// spent in this loop, so pause the timer.
+		b.StopTimer()
 		rtest.OK(b, err)
 		if len(buf) != length {
 			b.Errorf("wanted %d bytes, got %d", length, len(buf))
@@ -206,6 +210,7 @@ func BenchmarkLoadBlob(b *testing.B) {
 		if !id.Equal(id2) {
 			b.Errorf("wrong data returned, wanted %v, got %v", id.Str(), id2.Str())
 		}
+		b.StartTimer()
 	}
 }
 
@@ -230,6 +235,9 @@ func BenchmarkLoadAndDecrypt(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		data, err := repo.LoadAndDecrypt(context.TODO(), nil, restic.DataFile, storageID)
 		rtest.OK(b, err)
+
+		// See comment in BenchmarkLoadBlob.
+		b.StopTimer()
 		if len(data) != length {
 			b.Errorf("wanted %d bytes, got %d", length, len(data))
 		}
@@ -238,6 +246,7 @@ func BenchmarkLoadAndDecrypt(b *testing.B) {
 		if !dataID.Equal(id2) {
 			b.Errorf("wrong data returned, wanted %v, got %v", storageID.Str(), id2.Str())
 		}
+		b.StartTimer()
 	}
 }
 
@@ -322,14 +331,16 @@ func saveRandomDataBlobs(t testing.TB, repo restic.Repository, num int, sizeMax 
 		_, err := io.ReadFull(rnd, buf)
 		rtest.OK(t, err)
 
-		_, err = repo.SaveBlob(context.TODO(), restic.DataBlob, buf, restic.ID{})
+		_, _, err = repo.SaveBlob(context.TODO(), restic.DataBlob, buf, restic.ID{}, false)
 		rtest.OK(t, err)
 	}
 }
 
 func TestRepositoryIncrementalIndex(t *testing.T) {
-	repo, cleanup := repository.TestRepository(t)
+	r, cleanup := repository.TestRepository(t)
 	defer cleanup()
+
+	repo := r.(*repository.Repository)
 
 	repository.IndexFull = func(*repository.Index) bool { return true }
 
@@ -338,7 +349,7 @@ func TestRepositoryIncrementalIndex(t *testing.T) {
 		// add 3 packs, write intermediate index
 		for i := 0; i < 3; i++ {
 			saveRandomDataBlobs(t, repo, 5, 1<<15)
-			rtest.OK(t, repo.Flush(context.Background()))
+			rtest.OK(t, repo.FlushPacks(context.Background()))
 		}
 
 		rtest.OK(t, repo.SaveFullIndex(context.TODO()))
@@ -347,7 +358,7 @@ func TestRepositoryIncrementalIndex(t *testing.T) {
 	// add another 5 packs
 	for i := 0; i < 5; i++ {
 		saveRandomDataBlobs(t, repo, 5, 1<<15)
-		rtest.OK(t, repo.Flush(context.Background()))
+		rtest.OK(t, repo.FlushPacks(context.Background()))
 	}
 
 	// save final index

@@ -182,7 +182,10 @@ func copySnapshot(ctx context.Context, srcRepo, dstRepo restic.Repository, treeI
 				return fmt.Errorf("LoadBlob(%v) returned error %v", blobID, err)
 			}
 
-			newBlobID, err := dstRepo.SaveBlob(ctx, restic.DataBlob, buf, blobID)
+			newBlobID, known, err := dstRepo.SaveBlob(ctx, restic.DataBlob, buf, blobID, false)
+			if known {
+				debug.Log("Skipping since it's already in repo: %s\n", blobID.Str())
+			}
 			if err != nil {
 				return fmt.Errorf("SaveBlob(%v) returned error %v", blobID, err)
 			}

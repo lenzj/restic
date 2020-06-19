@@ -2,15 +2,15 @@ package main
 
 import (
 	"context"
-	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/restic/restic/internal/errors"
 	"github.com/restic/restic/internal/restic"
 	"github.com/restic/restic/internal/walker"
+
+	"github.com/minio/sha256-simd"
 	"github.com/spf13/cobra"
 )
 
@@ -148,7 +148,7 @@ func runStats(gopts GlobalOptions, args []string) error {
 	}
 
 	if gopts.JSON {
-		err = json.NewEncoder(os.Stdout).Encode(stats)
+		err = json.NewEncoder(globalOptions.stdout).Encode(stats)
 		if err != nil {
 			return fmt.Errorf("encoding output: %v", err)
 		}

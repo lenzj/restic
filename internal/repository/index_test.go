@@ -123,9 +123,10 @@ func TestIndexSerialize(t *testing.T) {
 		}
 	}
 
-	// serialize idx, unserialize to idx3
+	// finalize; serialize idx, unserialize to idx3
+	idx.Finalize()
 	wr3 := bytes.NewBuffer(nil)
-	err = idx.Finalize(wr3)
+	err = idx.Encode(wr3)
 	rtest.OK(t, err)
 
 	rtest.Assert(t, idx.Final(),
@@ -397,18 +398,16 @@ func createRandomIndex(rng *rand.Rand) (idx *repository.Index, lookupID restic.I
 	// create index with 200k pack files
 	for i := 0; i < 200000; i++ {
 		packID := NewRandomTestID(rng)
+		var blobs []restic.Blob
 		offset := 0
 		for offset < maxPackSize {
 			size := 2000 + rand.Intn(4*1024*1024)
 			id := NewRandomTestID(rng)
-			idx.Store(restic.PackedBlob{
-				PackID: packID,
-				Blob: restic.Blob{
-					Type:   restic.DataBlob,
-					ID:     id,
-					Length: uint(size),
-					Offset: uint(offset),
-				},
+			blobs = append(blobs, restic.Blob{
+				Type:   restic.DataBlob,
+				ID:     id,
+				Length: uint(size),
+				Offset: uint(offset),
 			})
 
 			offset += size
@@ -417,6 +416,7 @@ func createRandomIndex(rng *rand.Rand) (idx *repository.Index, lookupID restic.I
 				lookupID = id
 			}
 		}
+		idx.StorePack(packID, blobs)
 	}
 
 	return idx, lookupID
@@ -440,6 +440,13 @@ func BenchmarkIndexHasKnown(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		idx.Has(lookupID, restic.DataBlob)
+	}
+}
+
+func BenchmarkIndexAlloc(b *testing.B) {
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		createRandomIndex(rand.New(rand.NewSource(0)))
 	}
 }
 
