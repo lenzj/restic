@@ -277,19 +277,7 @@ func (d *SnapshotsDir) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error) {
 	// update snapshot names
 	updateSnapshotNames(d, d.root.cfg.SnapshotTemplate)
 
-	items := []fuse.Dirent{
-		{
-			Inode: d.inode,
-			Name:  ".",
-			Type:  fuse.DT_Dir,
-		},
-		{
-			Inode: d.root.inode,
-			Name:  "..",
-			Type:  fuse.DT_Dir,
-		},
-	}
-
+	items := make([]fuse.Dirent, 0, len(d.names)+1)
 	for name := range d.names {
 		items = append(items, fuse.Dirent{
 			Inode: fs.GenerateDynamicInode(d.inode, name),
@@ -319,19 +307,7 @@ func (d *SnapshotsIDSDir) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error)
 	// update snapshot ids
 	updateSnapshotIDSNames(d)
 
-	items := []fuse.Dirent{
-		{
-			Inode: d.inode,
-			Name:  ".",
-			Type:  fuse.DT_Dir,
-		},
-		{
-			Inode: d.root.inode,
-			Name:  "..",
-			Type:  fuse.DT_Dir,
-		},
-	}
-
+	items := make([]fuse.Dirent, 0, len(d.names))
 	for name := range d.names {
 		items = append(items, fuse.Dirent{
 			Inode: fs.GenerateDynamicInode(d.inode, name),
@@ -353,19 +329,7 @@ func (d *HostsDir) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error) {
 	// update host names
 	updateHostsNames(d)
 
-	items := []fuse.Dirent{
-		{
-			Inode: d.inode,
-			Name:  ".",
-			Type:  fuse.DT_Dir,
-		},
-		{
-			Inode: d.root.inode,
-			Name:  "..",
-			Type:  fuse.DT_Dir,
-		},
-	}
-
+	items := make([]fuse.Dirent, 0, len(d.hosts))
 	for host := range d.hosts {
 		items = append(items, fuse.Dirent{
 			Inode: fs.GenerateDynamicInode(d.inode, host),
@@ -387,19 +351,7 @@ func (d *TagsDir) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error) {
 	// update tag names
 	updateTagNames(d)
 
-	items := []fuse.Dirent{
-		{
-			Inode: d.inode,
-			Name:  ".",
-			Type:  fuse.DT_Dir,
-		},
-		{
-			Inode: d.root.inode,
-			Name:  "..",
-			Type:  fuse.DT_Dir,
-		},
-	}
-
+	items := make([]fuse.Dirent, 0, len(d.tags))
 	for tag := range d.tags {
 		items = append(items, fuse.Dirent{
 			Inode: fs.GenerateDynamicInode(d.inode, tag),
