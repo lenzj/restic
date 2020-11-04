@@ -15,7 +15,7 @@ func newProgressMax(show bool, max uint64, description string) *restic.Progress 
 
 	p := restic.NewProgress()
 
-	p.OnUpdate = func(s restic.Stat, d time.Duration, ticker bool) {
+	p.OnUpdate = func(s restic.Stat, d time.Duration) {
 		status := fmt.Sprintf("[%s] %s  %d / %d %s",
 			formatDuration(d),
 			formatPercent(s.Blobs, max),
@@ -28,7 +28,7 @@ func newProgressMax(show bool, max uint64, description string) *restic.Progress 
 		PrintProgress("%s", status)
 	}
 
-	p.OnDone = func(s restic.Stat, d time.Duration, ticker bool) {
+	p.OnDone = func(s restic.Stat, d time.Duration) {
 		fmt.Printf("\n")
 	}
 

@@ -30,7 +30,6 @@ func init() {
 
 // Progress reports progress on an operation.
 type Progress struct {
-	OnStart  func()
 	OnUpdate ProgressFunc
 	OnDone   ProgressFunc
 	fnM      sync.Mutex
@@ -58,13 +57,14 @@ type Stat struct {
 }
 
 // ProgressFunc is used to report progress back to the user.
-type ProgressFunc func(s Stat, runtime time.Duration, ticker bool)
+type ProgressFunc func(s Stat, runtime time.Duration)
 
-// NewProgress returns a new progress reporter. When Start() is called, the
-// function OnStart is executed once. Afterwards the function OnUpdate is
-// called when new data arrives or at least every d interval. The function
-// OnDone is called when Done() is called. Both functions are called
-// synchronously and can use shared state.
+// NewProgress returns a new progress reporter.
+//
+// The function OnUpdate, if not nil, is called when new data arrives or at
+// least after each d-length interval. The function OnDone is called when
+// Done() is called. Both functions are called synchronously and can use shared
+// state.
 func NewProgress() *Progress {
 	var d time.Duration
 	if isTerminal {
@@ -73,41 +73,21 @@ func NewProgress() *Progress {
 	return &Progress{d: d}
 }
 
-// Start resets and runs the progress reporter.
+// Start sets the progress reporter running.
 func (p *Progress) Start() {
-	if p == nil || p.running {
+	if p == nil {
 		return
 	}
 
 	p.cancel = make(chan struct{})
 	p.running = true
-	p.Reset()
 	p.start = time.Now()
 	p.c = nil
 	if p.d != 0 {
 		p.c = time.NewTicker(p.d)
 	}
 
-	if p.OnStart != nil {
-		p.OnStart()
-	}
-
 	go p.reporter()
-}
-
-// Reset resets all statistic counters to zero.
-func (p *Progress) Reset() {
-	if p == nil {
-		return
-	}
-
-	if !p.running {
-		panic("resetting a non-running Progress")
-	}
-
-	p.curM.Lock()
-	p.cur = Stat{}
-	p.curM.Unlock()
 }
 
 // Report adds the statistics from s to the current state and tries to report
@@ -143,7 +123,7 @@ func (p *Progress) updateProgress(cur Stat, ticker bool) {
 	}
 
 	p.fnM.Lock()
-	p.OnUpdate(cur, time.Since(p.start), ticker)
+	p.OnUpdate(cur, time.Since(p.start))
 	p.fnM.Unlock()
 }
 
@@ -194,8 +174,8 @@ func (p *Progress) Done() {
 
 	if p.OnDone != nil {
 		p.fnM.Lock()
-		p.OnUpdate(cur, time.Since(p.start), false)
-		p.OnDone(cur, time.Since(p.start), false)
+		p.OnUpdate(cur, time.Since(p.start))
+		p.OnDone(cur, time.Since(p.start))
 		p.fnM.Unlock()
 	}
 }
