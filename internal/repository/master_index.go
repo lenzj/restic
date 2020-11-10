@@ -23,7 +23,7 @@ func NewMasterIndex() *MasterIndex {
 	// sitation that only two indexes exist which are saved and merged concurrently.
 	idx := []*Index{NewIndex()}
 	idx[0].Finalize()
-	return &MasterIndex{idx: idx, pendingBlobs: restic.NewBlobSet()}
+	return &MasterIndex{idx: idx}
 }
 
 // Lookup queries all known Indexes for the ID and returns all matches.

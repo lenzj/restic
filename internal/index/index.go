@@ -277,8 +277,7 @@ func (idx *Index) RemovePack(id restic.ID) error {
 // DuplicateBlobs returns a list of blobs that are stored more than once in the
 // repo.
 func (idx *Index) DuplicateBlobs() (dups restic.BlobSet) {
-	dups = restic.NewBlobSet()
-	seen := restic.NewBlobSet()
+	var seen restic.BlobSet
 
 	for _, p := range idx.Packs {
 		for _, entry := range p.Entries {

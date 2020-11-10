@@ -107,7 +107,6 @@ func runStats(gopts GlobalOptions, args []string) error {
 		uniqueFiles:    make(map[fileID]struct{}),
 		uniqueInodes:   make(map[uint64]struct{}),
 		fileBlobs:      make(map[string]restic.IDSet),
-		blobs:          restic.NewBlobSet(),
 		snapshotsCount: 0,
 	}
 
@@ -124,14 +123,16 @@ func runStats(gopts GlobalOptions, args []string) error {
 
 	if statsOptions.countMode == countModeRawData {
 		// the blob handles have been collected, but not yet counted
-		for blobHandle := range stats.blobs {
+		return stats.blobs.ForEach(func(blobHandle restic.BlobHandle) error {
 			blobSize, found := repo.LookupBlobSize(blobHandle.ID, blobHandle.Type)
 			if !found {
 				return fmt.Errorf("blob %v not found", blobHandle)
 			}
+
 			stats.TotalSize += uint64(blobSize)
 			stats.TotalBlobCount++
-		}
+			return nil
+		})
 	}
 
 	if gopts.JSON {
@@ -166,7 +167,7 @@ func statsWalkSnapshot(ctx context.Context, snapshot *restic.Snapshot, repo rest
 	if statsOptions.countMode == countModeRawData {
 		// count just the sizes of unique blobs; we don't need to walk the tree
 		// ourselves in this case, since a nifty function does it for us
-		return restic.FindUsedBlobs(ctx, repo, *snapshot.Tree, stats.blobs)
+		return restic.FindUsedBlobs(ctx, repo, *snapshot.Tree, &stats.blobs)
 	}
 
 	err := walker.Walk(ctx, repo, *snapshot.Tree, restic.NewIDSet(), statsWalkTree(repo, stats))

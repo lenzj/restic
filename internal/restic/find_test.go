@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
 	"testing"
 	"time"
 
@@ -17,16 +16,16 @@ import (
 	"github.com/restic/restic/internal/restic"
 )
 
-func loadIDSet(t testing.TB, filename string) restic.BlobSet {
+func loadIDSet(t testing.TB, filename string) *restic.BlobSet {
 	f, err := os.Open(filename)
 	if err != nil {
 		t.Logf("unable to open golden file %v: %v", filename, err)
-		return restic.NewBlobSet()
+		return new(restic.BlobSet)
 	}
 
 	sc := bufio.NewScanner(f)
 
-	blobs := restic.NewBlobSet()
+	blobs := new(restic.BlobSet)
 	for sc.Scan() {
 		var h restic.BlobHandle
 		err := json.Unmarshal([]byte(sc.Text()), &h)
@@ -45,19 +44,14 @@ func loadIDSet(t testing.TB, filename string) restic.BlobSet {
 	return blobs
 }
 
-func saveIDSet(t testing.TB, filename string, s restic.BlobSet) {
+func saveIDSet(t testing.TB, filename string, s *restic.BlobSet) {
 	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		t.Fatalf("unable to update golden file %v: %v", filename, err)
 		return
 	}
 
-	var hs restic.BlobHandles
-	for h := range s {
-		hs = append(hs, h)
-	}
-
-	sort.Sort(hs)
+	hs := s.List()
 
 	enc := json.NewEncoder(f)
 	for _, h := range hs {
@@ -93,14 +87,14 @@ func TestFindUsedBlobs(t *testing.T) {
 	}
 
 	for i, sn := range snapshots {
-		usedBlobs := restic.NewBlobSet()
+		usedBlobs := new(restic.BlobSet)
 		err := restic.FindUsedBlobs(context.TODO(), repo, *sn.Tree, usedBlobs)
 		if err != nil {
 			t.Errorf("FindUsedBlobs returned error: %v", err)
 			continue
 		}
 
-		if len(usedBlobs) == 0 {
+		if usedBlobs.Len() == 0 {
 			t.Errorf("FindUsedBlobs returned an empty set")
 			continue
 		}
@@ -132,7 +126,7 @@ func TestFindUsedBlobsSkipsSeenBlobs(t *testing.T) {
 	snapshot := restic.TestCreateSnapshot(t, repo, findTestTime, findTestDepth, 0)
 	t.Logf("snapshot %v saved, tree %v", snapshot.ID().Str(), snapshot.Tree.Str())
 
-	usedBlobs := restic.NewBlobSet()
+	usedBlobs := new(restic.BlobSet)
 	err := restic.FindUsedBlobs(context.TODO(), repo, *snapshot.Tree, usedBlobs)
 	if err != nil {
 		t.Fatalf("FindUsedBlobs returned error: %v", err)
@@ -153,12 +147,12 @@ func BenchmarkFindUsedBlobs(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		blobs := restic.NewBlobSet()
-		err := restic.FindUsedBlobs(context.TODO(), repo, *sn.Tree, blobs)
+		var blobs restic.BlobSet
+		err := restic.FindUsedBlobs(context.TODO(), repo, *sn.Tree, &blobs)
 		if err != nil {
 			b.Error(err)
 		}
 
-		b.Logf("found %v blobs", len(blobs))
+		b.Logf("found %v blobs", blobs.Len())
 	}
 }

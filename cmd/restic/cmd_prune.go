@@ -194,9 +194,9 @@ type packInfoWithID struct {
 	packInfo
 }
 
-// prune selects which files to rewrite and then does that. The map usedBlobs is
+// prune selects which files to rewrite and then does that. The set usedBlobs is
 // modified in the process.
-func prune(opts PruneOptions, gopts GlobalOptions, repo restic.Repository, usedBlobs restic.BlobSet) error {
+func prune(opts PruneOptions, gopts GlobalOptions, repo restic.Repository, usedBlobs *restic.BlobSet) error {
 	ctx := gopts.ctx
 
 	var stats struct {
@@ -227,8 +227,7 @@ func prune(opts PruneOptions, gopts GlobalOptions, repo restic.Repository, usedB
 
 	Verbosef("searching used packs...\n")
 
-	keepBlobs := restic.NewBlobSet()
-	duplicateBlobs := restic.NewBlobSet()
+	var keepBlobs, duplicateBlobs restic.BlobSet
 
 	// iterate over all blobs in index to find out which blobs are duplicates
 	for blob := range repo.Index().Each(ctx) {
@@ -243,7 +242,7 @@ func prune(opts PruneOptions, gopts GlobalOptions, repo restic.Repository, usedB
 	}
 
 	// Check if all used blobs have been found in index
-	if len(usedBlobs) != 0 {
+	if usedBlobs.Len() != 0 {
 		Warnf("%v not found in the new index\n"+
 			"Data blobs seem to be missing, aborting prune to prevent further data loss!\n"+
 			"Please report this error (along with the output of the 'prune' run) at\n"+
@@ -481,7 +480,7 @@ func prune(opts PruneOptions, gopts GlobalOptions, repo restic.Repository, usedB
 
 		Verbosef("repacking packs\n")
 		bar := newProgressMax(!gopts.Quiet, uint64(len(repackPacks)), "packs repacked")
-		_, err := repository.Repack(ctx, repo, repackPacks, keepBlobs, bar)
+		_, err := repository.Repack(ctx, repo, repackPacks, &keepBlobs, bar)
 		bar.Done()
 		if err != nil {
 			return err
@@ -526,12 +525,12 @@ func rebuildIndexFiles(gopts GlobalOptions, repo restic.Repository, removePacks 
 	return DeleteFilesChecked(gopts, repo, obsoleteIndexes, restic.IndexFile)
 }
 
-func getUsedBlobs(gopts GlobalOptions, repo restic.Repository, snapshots []*restic.Snapshot) (usedBlobs restic.BlobSet, err error) {
+func getUsedBlobs(gopts GlobalOptions, repo restic.Repository, snapshots []*restic.Snapshot) (usedBlobs *restic.BlobSet, err error) {
 	ctx := gopts.ctx
 
 	Verbosef("finding data that is still in use for %d snapshots\n", len(snapshots))
 
-	usedBlobs = restic.NewBlobSet()
+	usedBlobs = new(restic.BlobSet)
 
 	bar := newProgressMax(!gopts.Quiet, uint64(len(snapshots)), "snapshots")
 	defer bar.Done()
